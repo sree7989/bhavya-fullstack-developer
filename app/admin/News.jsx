@@ -24,13 +24,11 @@ export default function AdminNews() {
   }, []);
 
   useEffect(() => {
-    // Revoke imageFile URL when imageFile changes or component unmounts
     return () => {
       if (imageFile) URL.revokeObjectURL(imageFile.preview);
     };
   }, [imageFile]);
 
-  // Load news list
   const loadNews = async () => {
     try {
       const res = await fetch("/api/news");
@@ -51,7 +49,6 @@ export default function AdminNews() {
     }
   };
 
-  // Upload image and return Base64 URI
   const handleImageUpload = async (file) => {
     if (!file) return form.image;
 
@@ -59,7 +56,7 @@ export default function AdminNews() {
     setStatusMessage("Uploading image...");
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", file); // <-- Ensure actual File object is sent
 
     try {
       const res = await fetch("/api/uploadImage", {
@@ -68,9 +65,7 @@ export default function AdminNews() {
       });
 
       if (!res.ok) {
-        // Try reading error message or fallback
         const text = await res.text();
-        // If server returns HTML error page, text starts with '<'
         const errorMessage =
           text.startsWith("<")
             ? "Image upload server error."
@@ -81,7 +76,7 @@ export default function AdminNews() {
       const data = await res.json();
       setIsUploading(false);
       setStatusMessage("");
-      return data.url; // Base64 Data URI string
+      return data.url;
     } catch (err) {
       console.error("Image upload error:", err);
       setIsUploading(false);
@@ -90,24 +85,22 @@ export default function AdminNews() {
     }
   };
 
-  // Validate required fields in form
   const isValid = (obj) => obj.title?.trim() && obj.content?.trim();
 
-  // Show messages inline for 5 seconds
   const showMessage = (message) => {
     setStatusMessage(message);
     setTimeout(() => setStatusMessage(""), 5000);
   };
 
-  // Add news article handler
   const handleAdd = async () => {
     if (!isValid(form)) {
       showMessage("⚠️ Title and Full Content are required.");
       return;
     }
 
+    // Pass the actual File object
     const imageUrl = await handleImageUpload(imageFile);
-    if (imageFile && !imageUrl) return; // Abort if upload failed
+    if (imageFile && !imageUrl) return;
 
     const newNews = {
       ...form,
@@ -132,7 +125,6 @@ export default function AdminNews() {
     }
   };
 
-  // Update existing news article
   const handleUpdate = async () => {
     if (!isValid(form)) {
       showMessage("⚠️ Title and Full Content are required.");
@@ -140,7 +132,7 @@ export default function AdminNews() {
     }
 
     const imageUrl = await handleImageUpload(imageFile);
-    if (imageFile && !imageUrl) return; 
+    if (imageFile && !imageUrl) return;
 
     const updatedNews = {
       ...form,
@@ -165,7 +157,6 @@ export default function AdminNews() {
     }
   };
 
-  // Delete by slug with prompt confirmation
   const handleDelete = async (slug) => {
     const isConfirmed = window.prompt(`Type 'DELETE' to confirm deletion of news item with slug: ${slug}`);
     if (isConfirmed !== "DELETE") return;
@@ -186,7 +177,6 @@ export default function AdminNews() {
     }
   };
 
-  // Edit news: fills form
   const handleEdit = (n) => {
     setForm({
       title: n.title,
@@ -201,7 +191,6 @@ export default function AdminNews() {
     setImageFile(null);
   };
 
-  // Reset form
   const resetForm = () => {
     setForm({
       title: "",
@@ -220,21 +209,17 @@ export default function AdminNews() {
     <div className="p-4 border rounded mb-8 bg-gray-50 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4 text-gray-800">📰 News Management Dashboard</h1>
 
-      {/* Status message */}
       <div className="text-center font-medium my-3 h-6 text-red-600">{statusMessage}</div>
 
-      {/* Form container */}
       <div className="p-6 bg-white rounded-xl shadow-lg mb-6 grid gap-4 border border-blue-100">
         <h2 className="text-xl font-semibold text-blue-600">{editSlug ? `Editing: ${editSlug}` : "Add New News Article"}</h2>
 
-        {/* Title */}
         <input
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
           placeholder="Title *"
           className="border border-gray-300 p-3 w-full rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
         />
-        {/* Summary */}
         <textarea
           value={form.summary}
           onChange={(e) => setForm({ ...form, summary: e.target.value })}
@@ -243,7 +228,6 @@ export default function AdminNews() {
           className="border border-gray-300 p-3 w-full rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
         />
 
-        {/* Image upload */}
         <div className="border border-dashed border-gray-400 p-4 w-full rounded-lg bg-gray-50 flex flex-col gap-3">
           <label className="text-sm font-semibold text-gray-700">Image File Upload:</label>
           <input
@@ -252,9 +236,8 @@ export default function AdminNews() {
             onChange={(e) => {
               const file = e.target.files[0];
               if (file) {
-                // Create a preview URL for revoking later
                 file.preview = URL.createObjectURL(file);
-                setImageFile(file);
+                setImageFile(file); // <-- actual File object
               }
             }}
             className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -282,7 +265,6 @@ export default function AdminNews() {
           </div>
         </div>
 
-        {/* Metadata fields */}
         <div className="grid grid-cols-3 gap-3">
           <input
             value={form.tag}
@@ -304,7 +286,6 @@ export default function AdminNews() {
           />
         </div>
 
-        {/* Full Content */}
         <textarea
           value={form.content}
           onChange={(e) => setForm({ ...form, content: e.target.value })}
@@ -313,7 +294,6 @@ export default function AdminNews() {
           className="border border-gray-300 p-3 w-full rounded-lg focus:ring-blue-500 focus:border-blue-500 transition font-mono text-sm"
         />
 
-        {/* Actions */}
         {editSlug ? (
           <div className="flex gap-3 justify-end">
             <button
@@ -345,7 +325,6 @@ export default function AdminNews() {
         )}
       </div>
 
-      {/* List of articles */}
       <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2 mt-8">
         Existing Articles ({news.length})
       </h2>
